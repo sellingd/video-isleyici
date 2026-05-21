@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: video-isleyici
-    env: node
-    buildCommand: npm install
-    startCommand: node server.js
-    envVars:
-      - key: NODE_ENV
-        value: production
