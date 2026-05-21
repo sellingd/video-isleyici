@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Video İşleyici</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.11.0/dist/tabler-icons.min.css">
+<style>
+:root{--bg:#f0ede8;--card:#fff;--sec:#f5f5f4;--b:rgba(0,0,0,0.11);--b2:rgba(0,0,0,0.2);--t:#1a1a1a;--t2:#666;--t3:#999;--r:8px;--rl:12px;--mono:'SF Mono','Fira Code',monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#111;--card:#1c1c1e;--sec:#2c2c2e;--b:rgba(255,255,255,0.1);--b2:rgba(255,255,255,0.2);--t:#f0f0f0;--t2:#aaa;--t3:#666}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t);font-size:14px;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2rem 1rem}
+.app{width:100%;max-width:660px}
+.card{background:var(--card);border-radius:16px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06)}
+.nav{display:flex;align-items:center;gap:8px;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--b)}
+.nav-title{font-size:15px;font-weight:600;margin-right:auto;display:flex;align-items:center;gap:8px}
+.tab{padding:6px 14px;border-radius:var(--r);font-size:13px;cursor:pointer;border:0.5px solid transparent;background:transparent;color:var(--t2);transition:all .15s;display:flex;align-items:center;gap:6px}
+.tab:hover{background:var(--sec)}.tab.on{background:var(--sec);border-color:var(--b2);color:var(--t);font-weight:500}
+.scr{display:none}.scr.on{display:block}
+.firm-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1rem}
+.firm-card{border:0.5px solid var(--b);border-radius:var(--rl);padding:1.1rem 1rem;cursor:pointer;transition:all .15s;background:var(--sec);text-align:center}
+.firm-card:hover{transform:translateY(-1px);border-color:#378ADD;box-shadow:0 4px 12px rgba(55,138,221,.15)}
+.firm-card.sel{border:2px solid #185FA5;background:#E6F1FB22}
+.firm-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;margin:0 auto 8px}
+.firm-nm{font-size:13px;font-weight:500}.firm-st{font-size:11px;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:3px}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sec{background:var(--sec);border:0.5px solid var(--b);border-radius:var(--rl);padding:1rem 1.25rem;margin-bottom:1rem}
+.sec-t{font-size:11px;font-weight:500;color:var(--t2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;display:flex;align-items:center;gap:6px}
+.media-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
+.media-box{border:0.5px solid var(--b);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.media-head{padding:7px 10px;display:flex;align-items:center;gap:6px;border-bottom:0.5px solid var(--b);font-size:11px;font-weight:500}
+.media-body{padding:8px 10px}
+.media-name{font-size:11px;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.media-name.set{color:#0F6E56;font-weight:500}.media-name.unset{color:var(--t3)}
+.pick-btn{width:100%;padding:6px;border:1px dashed var(--b2);border-radius:var(--r);background:transparent;font-size:11px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;position:relative}
+.pick-btn:hover{border-color:#378ADD;color:#185FA5}.pick-btn.has{border-style:solid;border-color:#1D9E75;color:#0F6E56}
+.pick-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.vlist{display:flex;flex-direction:column;gap:5px;max-height:300px;overflow-y:auto;margin-bottom:8px}
+.vi{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--card);border-radius:var(--r);font-size:12px;border:0.5px solid var(--b)}
+.vnum{color:var(--t3);font-size:11px;min-width:20px;text-align:right;flex-shrink:0}
+.vname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vsz{font-size:11px;color:var(--t3);flex-shrink:0}
+.vst{font-size:10px;padding:2px 8px;border-radius:99px;flex-shrink:0}
+.vs-w{background:var(--sec);color:var(--t2);border:0.5px solid var(--b)}
+.vs-p{background:#E6F1FB;color:#185FA5}.vs-d{background:#E1F5EE;color:#0F6E56}.vs-e{background:#FCEBEB;color:#A32D2D}
+.vdel{background:none;border:none;cursor:pointer;color:var(--t3);font-size:13px;padding:2px 4px;border-radius:4px}
+.vdel:hover{color:#E24B4A;background:#FCEBEB}
+.add-btn{width:100%;padding:9px;border:1px dashed var(--b2);border-radius:var(--r);background:transparent;color:var(--t2);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;position:relative}
+.add-btn:hover:not(:disabled){border-color:#378ADD;color:#185FA5}.add-btn:disabled{opacity:.4;cursor:not-allowed}
+.add-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.row{display:flex;gap:8px}
+.btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 16px;border-radius:var(--r);font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;flex:1}
+.btn-blue{background:#185FA5;color:#fff}.btn-blue:hover:not(:disabled){background:#0C447C}.btn-blue:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;border:0.5px solid var(--b2);color:var(--t);flex:0 0 auto;padding:10px 14px}
+.btn-ghost:hover:not(:disabled){background:var(--sec)}.btn-ghost:disabled{opacity:.4;cursor:not-allowed}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}
+.stat{background:var(--sec);border-radius:var(--r);padding:10px;text-align:center}
+.stat .v{font-size:20px;font-weight:500}.stat .l{font-size:11px;color:var(--t2);margin-top:2px}
+.log{font-family:var(--mono);font-size:11px;background:var(--sec);border-radius:var(--r);padding:10px;max-height:130px;overflow-y:auto;line-height:1.7;color:var(--t2)}
+.ls{color:#0F6E56}.le{color:#A32D2D}.lw{color:#854F0B}
+.pw{height:6px;background:var(--sec);border-radius:3px;overflow:hidden;margin-top:8px}
+.pb{height:100%;background:#185FA5;border-radius:3px;transition:width .3s}
+.notice{font-size:11px;color:var(--t2);padding:8px 12px;background:#E1F5EE44;border-radius:var(--r);border:0.5px solid #9FE1CB55;margin-top:8px;line-height:1.6}
+.empty{text-align:center;padding:1.5rem;color:var(--t3);font-size:13px}
+.empty i{font-size:24px;display:block;margin-bottom:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:99px}
+.b-blue{background:#E6F1FB;color:#185FA5}
+.banner{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--rl);margin-bottom:1rem;border:0.5px solid}
+.dl-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.dl-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card);border-radius:var(--r);border:0.5px solid #9FE1CB;font-size:12px}
+.dl-item .dl-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#0F6E56}
+.dl-btn{padding:4px 10px;background:#185FA5;color:#fff;border:none;border-radius:var(--r);font-size:11px;cursor:pointer;flex-shrink:0;text-decoration:none}
+.dl-btn:hover{background:#0C447C}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem}
+.modal{background:var(--card);border-radius:16px;border:0.5px solid var(--b2);padding:1.25rem;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:1rem}
+.modal-footer{display:flex;gap:8px;margin-top:1rem}
+.firm-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px solid var(--b);border-radius:var(--r);margin-bottom:8px;background:var(--sec)}
+.edit-btn{padding:6px 12px;border:0.5px solid var(--b2);border-radius:var(--r);background:var(--card);font-size:12px;cursor:pointer;color:var(--t2);transition:all .15s;flex-shrink:0}
+.edit-btn:hover{border-color:#378ADD;color:#185FA5}
+input[type=file].hidden{display:none}
+.upload-prog{font-size:11px;color:#185FA5;padding:6px 10px;background:#E6F1FB44;border-radius:var(--r);margin-top:6px;display:none}
+</style>
+</head>
+<body>
+<div class="app"><div class="card">
+  <div class="nav">
+    <span class="nav-title"><i class="ti ti-cut" style="font-size:18px"></i>Video İşleyici</span>
+    <button class="tab on" id="tab-p" onclick="showTab('p')"><i class="ti ti-player-play"></i>İşle</button>
+    <button class="tab" id="tab-m" onclick="showTab('m')"><i class="ti ti-building"></i>Firmalar</button>
+  </div>
+
+  <!-- İŞLEM -->
+  <div class="scr on" id="scr-p">
+    <div id="no-firm">
+      <div style="text-align:center;padding:1.5rem 1rem">
+        <i class="ti ti-building" style="font-size:36px;color:var(--t3);display:block;margin-bottom:12px"></i>
+        <div style="font-size:14px;font-weight:500;margin-bottom:6px">Firma Seçin</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:20px">Firma seçin, intro ve outro sunucuda saklanır.</div>
+        <div class="firm-grid" id="sel-grid" style="max-width:420px;margin:0 auto"></div>
+      </div>
+    </div>
+    <div id="proc" style="display:none">
+      <div class="banner" id="banner"></div>
+
+      <!-- Intro / Outro -->
+      <div class="sec">
+        <div class="sec-t"><i class="ti ti-files"></i>Intro & Outro</div>
+        <div class="media-row">
+          <div class="media-box">
+            <div class="media-head"><i class="ti ti-player-skip-back" style="font-size:13px"></i>Intro</div>
+            <div class="media-body">
+              <div class="media-name" id="intro-name">Seçilmedi</div>
+              <div class="pick-btn" id="intro-btn">
+                <input type="file" accept="video/mp4,video/*" onchange="pickMedia(event,'intro')">
+                <i class="ti ti-upload" style="font-size:13px"></i>Seç
+              </div>
+            </div>
+          </div>
+          <div class="media-box">
+            <div class="media-head"><i class="ti ti-player-skip-forward" style="font-size:13px"></i>Outro</div>
+            <div class="media-body">
+              <div class="media-name" id="outro-name">Seçilmedi</div>
+              <div class="pick-btn" id="outro-btn">
+                <input type="file" accept="video/mp4,video/*" onchange="pickMedia(event,'outro')">
+                <i class="ti ti-upload" style="font-size:13px"></i>Seç
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Videolar -->
+      <div class="sec">
+        <div class="sec-t"><i class="ti ti-video"></i>Ana Videolar <span class="badge b-blue" id="vcnt">0 / 50</span></div>
+        <div id="vlist-c"><div class="empty"><i class="ti ti-video-off"></i>Henüz video eklenmedi</div></div>
+        <button class="add-btn" id="add-btn">
+          <input type="file" accept="video/mp4,video/*" multiple onchange="onVideoPick(event)">
+          <i class="ti ti-plus"></i>Video Ekle <span style="font-size:11px;color:var(--t3)">(maks. 50)</span>
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat"><div class="v" id="st-tot">0</div><div class="l">Toplam</div></div>
+        <div class="stat"><div class="v" id="st-don" style="color:#0F6E56">0</div><div class="l">Bitti</div></div>
+        <div class="stat"><div class="v" id="st-err" style="color:#A32D2D">0</div><div class="l">Hata</div></div>
+        <div class="stat"><div class="v" id="st-mb">0</div><div class="l">MB</div></div>
+      </div>
+
+      <!-- Log -->
+      <div class="sec" style="margin-bottom:.75rem">
+        <div class="sec-t"><i class="ti ti-terminal"></i>Günlük</div>
+        <div class="log" id="log">Hazır.</div>
+        <div class="pw" id="pw" style="display:none"><div class="pb" id="pb" style="width:0%"></div></div>
+      </div>
+
+      <!-- İndirme listesi -->
+      <div id="dl-section" style="display:none" class="sec">
+        <div class="sec-t"><i class="ti ti-download"></i>Tamamlanan Videolar</div>
+        <div class="dl-list" id="dl-list"></div>
+      </div>
+
+      <div class="row">
+        <button class="btn btn-blue" id="start-btn" onclick="startProc()" disabled><i class="ti ti-player-play"></i>İşlemi Başlat</button>
+        <button class="btn btn-ghost" id="clr-btn" onclick="clearVids()"><i class="ti ti-trash"></i></button>
+        <button class="btn btn-ghost" onclick="desel()"><i class="ti ti-arrow-left"></i></button>
+      </div>
+      <div class="notice"><i class="ti ti-bolt" style="font-size:11px;vertical-align:-1px"></i> Videolar sunucuya yüklenir, FFmpeg ile işlenir, MP4 olarak indirilir. 10 dakika sonra otomatik silinir.</div>
+    </div>
+  </div>
+
+  <!-- FİRMALAR -->
+  <div class="scr" id="scr-m">
+    <div style="margin-bottom:1rem">
+      <div style="font-size:14px;font-weight:500;margin-bottom:4px">Firmalar</div>
+      <div style="font-size:12px;color:var(--t2)">Firma seçip işleme geçin. Her işlemde intro ve outro seçilir.</div>
+    </div>
+    <div id="firm-list"></div>
+  </div>
+</div></div>
+
+<script>
+const FIRMS=[
+  {id:'sefer',      name:'Sefer Derneği',short:'SD',bg:'#E1F5EE',fg:'#0F6E56',prefix:'SeferDernegi'},
+  {id:'img-avrupa', name:'İMG Avrupa',   short:'IA',bg:'#E6F1FB',fg:'#185FA5',prefix:'IMGAvrupa'},
+  {id:'img-tr',     name:'İMG Türkiye',  short:'IT',bg:'#FAECE7',fg:'#993C1D',prefix:'IMGTurkiye'},
+];
+
+let curFirm=null, vids=[], processing=false, done=0, errs=0;
+let introFile=null, outroFile=null;
+let pollTimer=null;
+
+// TABS
+function showTab(t){
+  document.querySelectorAll('.scr').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.getElementById('scr-'+t).classList.add('on');
+  document.getElementById('tab-'+t).classList.add('on');
+  if(t==='m') renderManage();
+  if(t==='p') renderSelGrid();
+}
+
+// FIRM SELECT
+function renderSelGrid(){
+  const g=document.getElementById('sel-grid');if(!g)return;g.innerHTML='';
+  FIRMS.forEach(f=>{
+    const el=document.createElement('div');
+    el.className='firm-card'+(curFirm?.id===f.id?' sel':'');
+    el.onclick=()=>selFirm(f.id);
+    el.innerHTML=`<div class="firm-av" style="background:${f.bg};color:${f.fg}">${f.short}</div>
+      <div class="firm-nm">${f.name}</div>
+      <div class="firm-st" style="color:var(--t2)"><span class="dot" style="background:#378ADD"></span>Seç</div>`;
+    g.appendChild(el);
+  });
+}
+
+function selFirm(id){
+  curFirm=FIRMS.find(x=>x.id===id);
+  vids=[];done=0;errs=0;introFile=null;outroFile=null;
+  document.getElementById('no-firm').style.display='none';
+  document.getElementById('proc').style.display='block';
+  document.getElementById('dl-section').style.display='none';
+  document.getElementById('intro-name').textContent='Seçilmedi';
+  document.getElementById('intro-name').className='media-name unset';
+  document.getElementById('outro-name').textContent='Seçilmedi';
+  document.getElementById('outro-name').className='media-name unset';
+  document.getElementById('intro-btn').className='pick-btn';
+  document.getElementById('outro-btn').className='pick-btn';
+  renderBanner();renderVList();updStats();chkReady();
+  setLog('Hazır. Intro, outro ve videoları seçip başlatın.');
+  document.getElementById('pw').style.display='none';
+}
+
+function desel(){
+  if(processing)return;
+  curFirm=null;vids=[];
+  document.getElementById('proc').style.display='none';
+  document.getElementById('no-firm').style.display='block';
+  renderSelGrid();
+}
+
+function renderBanner(){
+  const f=curFirm,b=document.getElementById('banner');
+  b.style.cssText=`background:${f.bg}33;border-color:${f.bg}88`;
+  b.innerHTML=`<div style="width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;background:${f.bg};color:${f.fg};flex-shrink:0">${f.short}</div>
+    <div><div style="font-size:13px;font-weight:500">${f.name}</div><div style="font-size:11px;color:${f.fg}">Çıktı: ${f.prefix}_[ad]_final.mp4</div></div>`;
+}
+
+// MEDIA PICK
+function pickMedia(e, type){
+  const file=e.target.files[0];if(!file)return;
+  if(type==='intro') introFile=file;
+  else outroFile=file;
+  document.getElementById(type+'-name').textContent=file.name;
+  document.getElementById(type+'-name').className='media-name set';
+  document.getElementById(type+'-btn').className='pick-btn has';
+  chkReady();
+}
+
+// VIDEOS
+function onVideoPick(e){
+  const files=Array.from(e.target.files),rem=50-vids.length,add=files.slice(0,rem);
+  if(files.length>rem)addLog(`Uyarı: sadece ${rem} video eklenebildi.`,'w');
+  add.forEach(f=>vids.push({name:f.name,size:f.size,status:'waiting',file:f}));
+  renderVList();updStats();chkReady();
+  if(add.length)addLog(`${add.length} video eklendi.`);
+  e.target.value='';
+}
+function remVid(i){if(processing)return;vids.splice(i,1);renderVList();updStats();chkReady();}
+
+function renderVList(){
+  const c=document.getElementById('vlist-c');
+  document.getElementById('vcnt').textContent=`${vids.length} / 50`;
+  document.getElementById('add-btn').disabled=vids.length>=50||processing;
+  if(!vids.length){c.innerHTML=`<div class="empty"><i class="ti ti-video-off"></i>Henüz video eklenmedi</div>`;return;}
+  const sc={waiting:'vs-w',processing:'vs-p',done:'vs-d',error:'vs-e'};
+  const sl={waiting:'Bekliyor',processing:'İşleniyor',done:'Tamam ✓',error:'Hata ✗'};
+  let h='<div class="vlist">';
+  vids.forEach((v,i)=>{
+    const mb=(v.size/1024/1024).toFixed(1);
+    const del=(!processing&&v.status==='waiting')?`<button class="vdel" onclick="remVid(${i})"><i class="ti ti-x"></i></button>`:'';
+    h+=`<div class="vi"><span class="vnum">${i+1}</span><i class="ti ti-video" style="font-size:14px;color:var(--t2)"></i><span class="vname">${v.name}</span><span class="vsz">${mb}MB</span><span class="vst ${sc[v.status]}">${sl[v.status]}</span>${del}</div>`;
+  });
+  c.innerHTML=h+'</div>';
+}
+
+function updStats(){
+  document.getElementById('st-tot').textContent=vids.length;
+  document.getElementById('st-don').textContent=done;
+  document.getElementById('st-err').textContent=errs;
+  document.getElementById('st-mb').textContent=(vids.reduce((s,v)=>s+v.size,0)/1024/1024).toFixed(1);
+}
+function chkReady(){
+  const ok=curFirm&&introFile&&outroFile&&vids.length>0&&!processing;
+  const b=document.getElementById('start-btn');if(b)b.disabled=!ok;
+}
+
+// LOG
+function setLog(msg){document.getElementById('log').textContent=msg;}
+function addLog(msg,type=''){
+  const log=document.getElementById('log');
+  const ts=new Date().toTimeString().slice(0,8);
+  const br=document.createElement('br'),sp=document.createElement('span');
+  sp.className=type?`l${type}`:'';sp.textContent=`[${ts}] ${msg}`;
+  log.appendChild(br);log.appendChild(sp);log.scrollTop=log.scrollHeight;
+}
+
+// PROCESS
+async function startProc(){
+  if(processing)return;
+  processing=true;done=0;errs=0;
+  ['start-btn','clr-btn','add-btn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=true;});
+  document.getElementById('pw').style.display='block';
+  document.getElementById('pb').style.width='0%';
+  document.getElementById('dl-section').style.display='none';
+  document.getElementById('dl-list').innerHTML='';
+  renderVList();
+  addLog('Dosyalar sunucuya yükleniyor...');
+
+  const form=new FormData();
+  form.append('firm_id',curFirm.id);
+  form.append('intro',introFile,introFile.name);
+  form.append('outro',outroFile,outroFile.name);
+  vids.forEach(v=>form.append('video',v.file,v.name));
+
+  let res;
+  try{
+    res=await(await fetch('/api/process',{method:'POST',body:form})).json();
+  }catch(e){
+    addLog('Yükleme hatası: '+e.message,'e');
+    processing=false;chkReady();return;
+  }
+
+  if(res.error){addLog('Hata: '+res.error,'e');processing=false;chkReady();return;}
+  addLog('Yükleme tamamlandı. İşlem başladı...');
+  pollTimer=setInterval(()=>pollJob(res.job_id),1200);
+}
+
+async function pollJob(jid){
+  let d;
+  try{d=await(await fetch('/api/job/'+jid)).json();}catch{return;}
+  if(d.statuses)d.statuses.forEach((s,i)=>{if(vids[i])vids[i].status=s;});
+  done=d.done||0;errs=d.errors||0;
+  renderVList();updStats();
+  const pct=vids.length>0?Math.round((done+errs)/vids.length*100):0;
+  document.getElementById('pb').style.width=pct+'%';
+  if(d.log)d.log.forEach(l=>addLog(l.msg,l.type||''));
+  if(d.finished){
+    clearInterval(pollTimer);
+    document.getElementById('pb').style.width='100%';
+    processing=false;
+    document.getElementById('clr-btn').disabled=false;
+    chkReady();
+    // Show download links
+    if(d.outputs&&d.outputs.length>0){
+      document.getElementById('dl-section').style.display='block';
+      const dl=document.getElementById('dl-list');
+      d.outputs.forEach(o=>{
+        const item=document.createElement('div');
+        item.className='dl-item';
+        item.innerHTML=`<i class="ti ti-file-type-mp4" style="font-size:16px;color:#0F6E56;flex-shrink:0"></i>
+          <span class="dl-name">${o.name}</span>
+          <a class="dl-btn" href="${o.url}" download="${o.name}"><i class="ti ti-download" style="font-size:11px"></i> İndir</a>`;
+        dl.appendChild(item);
+      });
+    }
+  }
+}
+
+function clearVids(){
+  if(processing)return;
+  vids=[];done=0;errs=0;
+  renderVList();updStats();chkReady();
+  document.getElementById('pw').style.display='none';
+  document.getElementById('dl-section').style.display='none';
+  setLog('Temizlendi.');
+}
+
+// MANAGE
+function renderManage(){
+  const l=document.getElementById('firm-list');l.innerHTML='';
+  FIRMS.forEach(f=>{
+    const row=document.createElement('div');row.className='firm-row';
+    row.innerHTML=`<div style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;background:${f.bg};color:${f.fg};flex-shrink:0">${f.short}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500">${f.name}</div>
+        <div style="font-size:11px;color:var(--t2);margin-top:2px">Çıktı öneki: ${f.prefix}_[videoadi]_final.mp4</div>
+      </div>
+      <button class="edit-btn" onclick="selFirm('${f.id}');showTab('p')"><i class="ti ti-player-play" style="font-size:13px"></i> Seç</button>`;
+    l.appendChild(row);
+  });
+}
+
+renderSelGrid();
+</script>
+</body>
+</html>
